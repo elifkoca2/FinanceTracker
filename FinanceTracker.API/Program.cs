@@ -46,7 +46,7 @@ builder.Services.AddSwaggerGen(options =>
 
 // SQLite baðlantýsý
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=finance_tracker.db"));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity servisleri
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>

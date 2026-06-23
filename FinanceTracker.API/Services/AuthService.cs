@@ -49,7 +49,7 @@ namespace FinanceTracker.API.Services
 
         }
 
-        public async  Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
+        public async  Task<RegisterResponseDto> RegisterAsync(RegisterDto dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
@@ -80,12 +80,10 @@ namespace FinanceTracker.API.Services
 
             var token = _jwtService.GenerateToken(user);
 
-            return new AuthResponseDto
+            return new RegisterResponseDto
             {
-                Token = token,
-                FirstName = user.FirstName,
-                Email = user.Email!,
-                ExpiresAt = _jwtService.GetExpirationDate()
+                 Email = user.Email,
+                 FirstName = user.FirstName
             };
         }
     }

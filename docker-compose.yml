@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  financetracker-api:
+    build:
+      context: .
+      dockerfile: FinanceTracker.API/Dockerfile
+    container_name: financetracker-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Jwt__SecretKey=Bu-Cok-Gizli-Bir-Anahtar-En-Az-32-Karakter-Olmali-12345
+      - Jwt__Issuer=FinanceTrackerAPI
+      - Jwt__Audience=FinanceTrackerClient
+      - Jwt__ExpirationInMinutes=60
+    volumes:
+      - ./data:/app/data
