@@ -1,6 +1,23 @@
+# Build output
 **/bin/
 **/obj/
-**/.vs/
-**/node_modules/
-*.md
-.git/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# IDE
+.idea/
+*.DS_Store
+
+# Logs
+*.log
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+
+# Node (varsa frontend varsa)
+node_modules/

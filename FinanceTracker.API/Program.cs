@@ -1,15 +1,17 @@
 using System.Text;
-using FinanceTracker.API.Data;
+using FinanceTracker.Infrastructure.Data;
+using FinanceTracker.API.Hubs;
 using FinanceTracker.API.Middleware;
-using FinanceTracker.API.Models;
-using FinanceTracker.API.Repositories;
-using FinanceTracker.API.Repositories.Interfaces;
+using FinanceTracker.Core.Models;
+using FinanceTracker.Core.Interfaces.Repositories;
+using FinanceTracker.Core.Interfaces.Services;
 using FinanceTracker.API.Services;
-using FinanceTracker.API.Services.Interfaces;
+using FinanceTracker.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using FinanceTracker.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +67,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -77,6 +80,22 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!))
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs/price"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -91,6 +110,13 @@ builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+//SignalR
+builder.Services.AddSignalR();
+
+//Background Services
+builder.Services.AddHostedService<PriceUpdateBackgroundService>();
+builder.Services.AddHostedService<AlertCheckBackgroundService>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -101,6 +127,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.MapHub<PriceHub>("/hubs/price");
 
 if (app.Environment.IsDevelopment())
 {

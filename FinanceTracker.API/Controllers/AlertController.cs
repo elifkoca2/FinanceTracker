@@ -1,4 +1,4 @@
-﻿using FinanceTracker.API.Services.Interfaces;
+﻿using FinanceTracker.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
