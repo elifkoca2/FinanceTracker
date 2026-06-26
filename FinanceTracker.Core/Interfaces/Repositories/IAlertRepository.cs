@@ -6,6 +6,7 @@ namespace FinanceTracker.Core.Interfaces.Repositories
     {
         Task<List<PriceAlert>> GetAllAsync(string userId);
         Task<PriceAlert?> GetByIdAsync(int id);
+        Task<int> GetUnreadCountAsync(string userId); //Okunmamış bildirim sayısı 
         Task AddAsync(PriceAlert alert);
         Task SaveChangesAsync();
     }

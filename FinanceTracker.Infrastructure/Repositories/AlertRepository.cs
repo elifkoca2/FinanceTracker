@@ -27,6 +27,12 @@ namespace FinanceTracker.Infrastructure.Repositories
         public async Task<PriceAlert?> GetByIdAsync(int id)
          => await _context.PriceAlerts.FindAsync(id);
 
+        public async Task<int> GetUnreadCountAsync(string userId)
+        => await _context.PriceAlerts
+            .Include(a => a.WatchlistItem)
+            .Where(a => a.WatchlistItem.UserId == userId && !a.IsRead)
+            .CountAsync();
+
         public async Task SaveChangesAsync()
         => await _context.SaveChangesAsync();
     }

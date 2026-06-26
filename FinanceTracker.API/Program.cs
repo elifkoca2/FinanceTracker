@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using FinanceTracker.Application.Services;
+using FinanceTracker.Mock;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,7 +106,7 @@ builder.Services.AddScoped<IAlertRepository, AlertRepository>();
 
 // Services
 builder.Services.AddScoped<IWatchlistService, WatchlistService>();
-builder.Services.AddScoped<IPriceService, PriceService>();
+builder.Services.AddScoped<IPriceService, MockPriceService>();
 builder.Services.AddScoped<IAlertService, AlertService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

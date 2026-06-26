@@ -23,6 +23,14 @@ namespace FinanceTracker.Application.Services
 
         public async Task<WatchlistItemResponseDto> AddAsync(CreateWatchlistItemDto dto, string userId)
         {
+            //Hisse takip listesinde var mı?
+            var existing = await _repository.GetBySymbolAsync(dto.Symbol.ToUpper(), userId);
+            if (existing != null) 
+            {
+                _logger.LogWarning("Kullanıcı {UserId} zaten takip ediyor : {Symbol}", userId, dto.Symbol);
+                throw new InvalidOperationException($"{dto.Symbol.ToUpper()} zaten takip listesinde.");
+            }
+
             var currentPrice = await _priceService.GetCurrentPriceAsync(dto.Symbol);
 
             var item = new WatchlistItem
@@ -109,5 +117,27 @@ namespace FinanceTracker.Application.Services
             AlertTriggered = item.AlertTriggered,
             LastUpdated = item.LastUpdated
         };
+
+        public async Task<WatchlistItemResponseDto?> UpdateAsync(int id, UpdateWatchlistItemDto dto, string userId)
+        {
+            var item = await _repository.GetByIdAsync(id, userId);
+            if (item == null) 
+            {
+                _logger.LogWarning("Güncelleme: Id {Id} bulunamadı.", id);
+                return null;
+            }
+
+            item.TargetPrice = dto.TargetPrice;
+            item.AlertDirection = dto.AlertDirection;
+            item.AlertTriggered = false; // Hedef değişince alert sıfırlanır 
+            await _repository.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Kullanıcı {UserId} hisse güncellendi: {Symbol}, Yeni hedef: {Target}",
+                userId, item.Symbol, item.TargetPrice);
+
+            return MapToDto(item);
+
+        }
     }
     }

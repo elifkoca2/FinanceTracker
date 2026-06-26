@@ -80,5 +80,12 @@ namespace FinanceTracker.Application.Services
 
             _logger.LogInformation(" Alert tetiklendi! {Symbol} - Fiyat: {Price}", item.Symbol, item.CurrentPrice);
         }
+
+        public async Task<int> GetUnreadCountAsync(string userId)
+        {
+            var count = await  _alertRepository.GetUnreadCountAsync(userId);
+            _logger.LogInformation("Kullanıcı {UserId} okunmamış bildirim sayısı : {Count}", userId, count);
+            return count;
+        }
     }
 }

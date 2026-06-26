@@ -35,5 +35,13 @@ namespace FinanceTracker.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("unread-count")]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            var count = await _alertService.GetUnreadCountAsync(GetUserId());
+            return Ok(new { unreadCount = count });
+        }
+
     }
 }

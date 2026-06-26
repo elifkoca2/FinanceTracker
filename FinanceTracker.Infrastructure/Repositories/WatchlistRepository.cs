@@ -29,6 +29,10 @@ namespace FinanceTracker.Infrastructure.Repositories
              => await _context.WatchlistItems
             .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
 
+        public async Task<WatchlistItem?> GetBySymbolAsync(string symbol, string userId)
+            => await _context.WatchlistItems
+                .FirstOrDefaultAsync(w => w.Symbol == symbol && w.UserId == userId);
+
         public void Remove(WatchlistItem item)
           => _context.WatchlistItems.Remove(item);
 

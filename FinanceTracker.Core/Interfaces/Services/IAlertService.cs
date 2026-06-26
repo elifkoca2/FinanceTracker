@@ -9,5 +9,6 @@ namespace FinanceTracker.Core.Interfaces.Services
         Task CheckAndCreateAlertAsync(WatchlistItem item);
         Task<List<AlertResponseDto>> GetAllAlertsAsync(string userId);
         Task<bool> MarkAsReadAsync(int alertId, string userId);
+        Task<int> GetUnreadCountAsync(string userId);
     }
 }

@@ -53,9 +53,18 @@ namespace FinanceTracker.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] CreateWatchlistItemDto dto)
         {
-            var created = await _watchlistService.AddAsync(dto, GetUserId());
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                var created = await _watchlistService.AddAsync(dto, GetUserId());
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }
+
+            catch (InvalidOperationException ex) 
+            {
+                return BadRequest(new { message = ex.Message });    
+            }
         }
+
 
         [HttpPut("{id}/refresh")]
         public async Task<IActionResult> RefreshPrice(int id)
@@ -75,6 +84,15 @@ namespace FinanceTracker.API.Controllers
                 return NotFound(new { message = $"Id {id} bulunamadı." });
 
             return NoContent();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateWatchlistItemDto dto)
+        {
+            var updated = await _watchlistService.UpdateAsync(id, dto, GetUserId());
+            if (updated == null)
+                return NotFound(new { message = $"Id {id} bulunamadı." });
+            return Ok(updated);
         }
     }
 }
