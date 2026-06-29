@@ -26,13 +26,10 @@ namespace FinanceTracker.API.Controllers
             return Ok(alerts);
         }
 
-        [HttpPut("{id}/read")]
-        public async Task<IActionResult> MarkAsRead(int id)
+        [HttpPut("read-all")]
+        public async Task<IActionResult> MarkAllAsRead()
         {
-            var success = await _alertService.MarkAsReadAsync(id, GetUserId());
-            if (!success)
-                return NotFound(new { message = $"Id {id} bulunamadı." });
-
+            await _alertService.MarkAllAsReadAsync(GetUserId());
             return NoContent();
         }
 

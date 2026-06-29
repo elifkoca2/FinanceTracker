@@ -48,15 +48,10 @@ namespace FinanceTracker.Application.Services
             }).ToList();
         }
 
-        public async Task<bool> MarkAsReadAsync(int alertId, string userId)
+        public async Task MarkAllAsReadAsync(string userId)
         {
-            var alert = await _alertRepository.GetByIdAsync(alertId);
-            if (alert == null) return false;
-
-            alert.IsRead = true;
-            await _alertRepository.SaveChangesAsync();
-            _logger.LogInformation("Alert {Id} okundu işaretlendi.", alertId);
-            return true;
+            await _alertRepository.MarkAllAsReadAsync(userId);
+            _logger.LogInformation("Kullanıcı {UserId} tüm bildirimleri okundu işaretledi.", userId);
         }
 
         private static bool IsTargetReached(WatchlistItem item) =>

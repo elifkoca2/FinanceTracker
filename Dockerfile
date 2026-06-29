@@ -5,6 +5,7 @@ COPY ["FinanceTracker.API/FinanceTracker.API.csproj", "FinanceTracker.API/"]
 COPY ["FinanceTracker.Core/FinanceTracker.Core.csproj", "FinanceTracker.Core/"]
 COPY ["FinanceTracker.Application/FinanceTracker.Application.csproj", "FinanceTracker.Application/"]
 COPY ["FinanceTracker.Infrastructure/FinanceTracker.Infrastructure.csproj", "FinanceTracker.Infrastructure/"]
+COPY ["FinanceTracker.Mock/FinanceTracker.Mock.csproj", "FinanceTracker.Mock/"]
 
 RUN dotnet restore "FinanceTracker.API/FinanceTracker.API.csproj"
 

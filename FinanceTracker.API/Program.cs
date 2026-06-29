@@ -13,6 +13,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using FinanceTracker.Application.Services;
 using FinanceTracker.Mock;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +103,30 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// HEALTH CHECK
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("database");
+
+// RATE LIMITING
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 60;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsync(
+            "Çok fazla istek gönderdiniz. Lütfen bir dakika bekleyin.", token);
+    };
+});
+
+
 // Repositories
 builder.Services.AddScoped<IWatchlistRepository, WatchlistRepository>();
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
@@ -143,10 +170,34 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowReact");
 
+app.UseRateLimiter();
+
 app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+
+        var result = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description
+            })
+        };
+
+        await context.Response.WriteAsync(
+            System.Text.Json.JsonSerializer.Serialize(result));
+    }
+});
+
+app.MapControllers().RequireRateLimiting("fixed");
 
 app.Run();
