@@ -5,7 +5,7 @@ const AuthContext= createContext(null);
 //Kullanıcı giriş yönetimi 
 export const AuthProvider= ({children}) => {
     const [token, setToken] = useState(localStorage.getItem('token'));
-    const [firstName, setFisrtName] = useState(localStorage.getItem('firstName'));
+    const [firstName, setFirstName] = useState(localStorage.getItem('firstName'));
 
     const login =(token, firstName)=>{
         localStorage.setItem('token', token);
@@ -18,7 +18,7 @@ export const AuthProvider= ({children}) => {
         localStorage.removeItem('token');
         localStorage.removeItem('firstName');
         setToken(null);
-        setFisrtName(null);
+        setFirstName(null);
     };
     
     return(
