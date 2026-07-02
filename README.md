@@ -1,55 +1,73 @@
-# Finance Tracker API
+# Finance Tracker
 
-Kullanıcıların hisse senetlerini takip edebildiği, fiyat alarmları kurabildiği ve gerçek zamanlı bildirimler alabileceği bir finans takip uygulaması.
+Kullanıcıların hisse senetlerini takip edebildiği, fiyat alarmları kurabildiği 
+ve gerçek zamanlı bildirimler alabileceği full-stack bir finans takip uygulaması.
 
 ## Teknolojiler
 
-- **.NET 8** — Web API
-- **Clean Architecture** — Core, Application, Infrastructure, API katmanları
-- **Entity Framework Core** — ORM
-- **SQLite** — Veritabanı
-- **ASP.NET Identity** — Kullanıcı yönetimi
-- **JWT Bearer** — Authentication
-- **SignalR** — Gerçek zamanlı bildirimler
-- **Health Checks** — Uygulama sağlık durumu kontrolü
-- **Rate Limiting** — API istek sınırlandırma
+### Backend
+- **.NET 8 Web API** — Clean Architecture (5 katman)
+- **ASP.NET Identity + JWT** — Authentication
+- **Entity Framework Core + SQLite** — Veritabanı
+- **SignalR** — Gerçek zamanlı WebSocket iletişimi
+- **Background Services** — Otomatik fiyat güncelleme ve alert kontrolü
 - **Docker** — Containerization
 
+### Frontend
+- **React + Vite** — UI
+- **Tailwind CSS** — Styling
+- **Axios** — HTTP istekleri
+- **@microsoft/signalr** — Gerçek zamanlı bağlantı
+- **React Router** — Sayfa yönlendirme
+
 ## Mimari
-- FinanceTracker.Core → Domain models, DTOs, abstractions (interfaces)
-- FinanceTracker.Application → Business logic (services, use cases)
-- FinanceTracker.Infrastructure → Data access (EF Core, repositories)
-- FinanceTracker.API → Presentation layer (controllers, hubs, middleware)
+- FinanceTracker.Core            → Modeller, DTO'lar, Interface'ler 
+- FinanceTracker.Application     → İş mantığı / Services 
+- FinanceTracker.Infrastructure  → Veritabanı, Repositories 
+- FinanceTracker.Mock            → Fiyat simülasyon servisi 
+- FinanceTracker.API             → HTTP katmanı, Controllers, Hubs 
 
 ## Özellikler
 
-- Kullanıcı kaydı ve girişi (JWT token)
-- Hisse senedi takip listesi oluşturma
-- Aynı hissenin tekrar eklenmesini engelleme
-- Hedef fiyat belirleme (yukarı/aşağı yön)
-- Otomatik fiyat güncelleme (30 saniyede bir)
-- Hedef fiyata ulaşınca otomatik bildirim
-- Gerçek zamanlı fiyat ve bildirim akışı (SignalR)
-- Bildirimleri toplu okundu işaretleme
-- Okunmamış bildirim sayısını görüntüleme
-- Health Check endpoint'i
-- API Rate Limiting koruması
+### Kullanıcı Yönetimi
+- Kayıt (ad, soyad, e-mail, şifre)
+- Giriş (JWT token ile)
+- Her kullanıcı sadece kendi verilerini görür
+
+### Hisse Takibi
+- Hisse ekleme (sembol + hedef fiyat + yön)
+- Hedef fiyat ve yön güncelleme
+- Hisse silme
+- Manuel fiyat yenileme
+
+### Otomatik Sistem
+- Her 30 saniyede bir fiyat otomatik güncellenir
+- Her 35 saniyede bir alert kontrolü yapılır
+- Hedef aşılınca veritabanına alert kaydedilir
+
+### Gerçek Zamanlı Bildirimler (SignalR)
+- Fiyat değişince anlık güncelleme (refresh'e gerek yok)
+- Hedef fiyata ulaşınca anlık bildirim
+- Fiyat arınca yeşil, düşünce kırmızı renk animasyonu
+
+### Diğer
+- Rate limiting (dakikada 60 istek)
+- Health check endpoint (/health)
+- Global exception handling
+- Input validation
 - Docker desteği
 
 ## Kurulum
 
 ### Gereksinimler
-
 - .NET 8 SDK
+- Node.js 20+
 - Docker Desktop (opsiyonel)
 
-### Lokal Çalıştırma
+### 1. Lokal Çalıştırma
 
+**Backend:**
 ```bash
-# Projeyi klonla
-git clone https://github.com/elifkoca2/FinanceTracker.git
-cd FinanceTracker
-
 # Veritabanını oluştur
 cd FinanceTracker.Infrastructure
 dotnet ef database update --startup-project ../FinanceTracker.API/FinanceTracker.API.csproj
@@ -57,89 +75,97 @@ dotnet ef database update --startup-project ../FinanceTracker.API/FinanceTracker
 # API'yi çalıştır
 cd ../FinanceTracker.API
 dotnet run
+# Swagger: http://localhost:5181/swagger
 ```
 
-Swagger arayüzü: `https://localhost:7103/swagger`
+**Frontend:**
+```bash
+cd finance-tracker-client
+npm install
+npm run dev
+# Uygulama: http://localhost:5173
+```
 
-### Docker ile Çalıştırma
-
+### 2. Docker ile Çalıştırma (Sadece Backend)
 ```bash
 docker-compose up --build
+# Swagger: http://localhost:8080/swagger
 ```
-
-Swagger arayüzü: `http://localhost:8080/swagger`
 
 ## API Endpoints
 
 ### Auth
 | Method | Endpoint | Açıklama |
 |--------|----------|----------|
-| POST | /api/auth/register | Yeni kullanıcı kaydı |
-| POST | /api/auth/login | Giriş yap, JWT token al |
+| POST | /api/auth/register | Kayıt ol |
+| POST | /api/auth/login | Giriş yap, JWT al |
 
-### Watchlist
+### Watchlist (🔒 JWT gerekli)
 | Method | Endpoint | Açıklama |
 |--------|----------|----------|
-| GET | /api/watchlist | Takip listesini getir |
-| POST | /api/watchlist | Yeni hisse ekle |
+| GET | /api/watchlist | Takip listesi |
+| POST | /api/watchlist | Hisse ekle |
 | GET | /api/watchlist/{id} | Hisse detayı |
-| PUT | /api/watchlist/{id}/refresh | Fiyatı güncelle |
-| DELETE | /api/watchlist/{id} | Hisseyi sil |
+| PUT | /api/watchlist/{id} | Hedef güncelle |
+| PUT | /api/watchlist/{id}/refresh | Fiyat yenile |
+| DELETE | /api/watchlist/{id} | Hisse sil |
 
-### Alert
+### Alert (🔒 JWT gerekli)
 | Method | Endpoint | Açıklama |
 |--------|----------|----------|
-| GET | /api/alert | Bildirimleri listele |
-| PUT | /api/alert/read-all | Okundu işaretle |
-| GET | /api/alert/unread-count | Okunmamış bildirim sayısı |
+| GET | /api/alert | Bildirimler |
+| GET | /api/alert/unread-count | Okunmamış sayısı |
+| PUT | /api/alert/read-all | Tümünü okundu yap |
+
+### Sistem
+| Method | Endpoint | Açıklama |
+|--------|----------|----------|
+| GET | /health | Sistem sağlığı |
 
 ## SignalR
 
-Bağlantı endpoint'i: `/hubs/price`
+Bağlantı: `/hubs/price` (JWT token gerekli)
 
-| Event | Açıklama |
-|-------|----------|
-| PriceUpdated | Fiyat güncellendiğinde tetiklenir |
-| AlertTriggered | Hedef fiyata ulaşıldığında tetiklenir |
+| Event | Açıklama | Veri |
+|-------|----------|------|
+| PriceUpdated | Fiyat güncellendi | itemId, symbol, currentPrice |
+| AlertTriggered | Hedefe ulaşıldı | itemId, symbol, currentPrice, targetPrice |
 
 ## Background Services
 
 | Servis | Interval | Görev |
 |--------|----------|-------|
-| PriceUpdateBackgroundService | 30 saniye | Fiyatları günceller, SignalR ile bildirir |
-| AlertCheckBackgroundService | 35 saniye | Alert kontrolü yapar, tetiklenince bildirir |   
+| PriceUpdateBackgroundService | 30 sn | Fiyat günceller + SignalR bildirir |
+| AlertCheckBackgroundService | 35 sn | Alert kontrol eder + SignalR bildirir |
 
-## Health Check
+## 📁 Proje Yapısı
 
-| Endpoint  | Açıklama                         |
-| --------- | -------------------------------- |
-| `/health` | API sağlık durumunu kontrol eder |
-
-### Örnek Yanıt
-
-```json
-{
-  "status": "Healthy"
-}
+```text
+FinanceTracker/
+├── FinanceTracker.API/              # Web API katmanı
+│   ├── Controllers/
+│   ├── Hubs/
+│   ├── Middleware/
+│   └── Services/                    # Background Services
+├── FinanceTracker.Core/             # Domain modelleri ve interface'ler
+│   ├── Models/
+│   ├── DTOs/
+│   └── Interfaces/
+├── FinanceTracker.Application/      # Business logic
+│   └── Services/
+├── FinanceTracker.Infrastructure/   # Veritabanı ve repository katmanı
+│   ├── Data/
+│   ├── Repositories/
+│   └── Migrations/
+├── FinanceTracker.Mock/             # Mock fiyat servisi
+│   └── MockPriceService.cs
+├── finance-tracker-client/          # React frontend
+│   └── src/
+│       ├── pages/
+│       ├── components/
+│       ├── hooks/
+│       ├── context/
+│       └── api/
+├── docker-compose.yml               # Docker Compose yapılandırması
+└── Dockerfile                       # Docker image tanımı
 ```
-
----
-
-## Rate Limiting
-
-API istekleri rate limiting ile korunmaktadır.
-
-* Belirlenen süre içerisinde maksimum istek sayısı sınırlandırılmıştır.
-* Limit aşıldığında API aşağıdaki yanıtı döndürür:
-
-### Örnek Yanıt
-
-```http
-HTTP/1.1 429 Too Many Requests
-Content-Type: application/json
-
-{
-  "message": "Too many requests. Please try again later."
-}
-```
-
